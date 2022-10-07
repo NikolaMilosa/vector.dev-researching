@@ -1,0 +1,40 @@
+[sources.logs]
+type = "docker_logs"
+include_containers = [ "rustlogger" ]
+docker_host = "http://host.docker.internal:2375"
+
+[sources.metrics]
+type = "host_metrics"
+collectors = ["cpu"]
+namespace = "rustlogger"
+scrape_interval_secs = 10
+
+[transforms.parse]
+type = "remap"
+inputs = ["logs"]
+source = """
+temp = .
+. = {}
+. |= parse_regex!(temp.message, r'^\\[(?P<timestamp>.*) (?P<severity>\\w+) (?P<app>.*)\\] Logging a random number : (?P<num>-?\\d+)$')
+.app = temp.container_name
+"""
+
+[transforms.filter]
+type = "filter"
+inputs = ["parse"]
+condition = "to_int!(.num) > 0"
+
+[sinks.out_logs]
+inputs = ["filter"]
+type = "vector"
+address = "vector-aggregator:6000"
+version = "2"
+    [sinks.out_logs.batch]
+    max_events = 5
+    timeout_secs = 5
+
+[sinks.out_metrics]
+inputs = ["metrics"]
+type = "vector"
+address = "vector-aggregator:6001"
+version = "2"
