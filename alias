@@ -1,1 +1,0 @@
-alias vector='docker run --name vector -d --mount src="$(pwd)/vector/",target=/etc/vector,type=bind --rm timberio/vector:0.24.1-debian'
