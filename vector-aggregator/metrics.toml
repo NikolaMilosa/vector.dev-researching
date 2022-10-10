@@ -4,6 +4,12 @@ address = "0.0.0.0:6001"
 version = "2"
 
 [sinks.out_metrics]
-type = "prometheus_exporter"
+type = "prometheus_remote_write"
 inputs = ["in_metrics"]
-address = "0.0.0.0:9598"
+endpoint = "http://promscale:9201/write"
+
+[sinks.out_console]
+type = "console"
+inputs = [ "in_metrics" ]
+    [sinks.out_console.encoding]
+    codec = "json"

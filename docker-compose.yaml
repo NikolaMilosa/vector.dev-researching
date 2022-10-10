@@ -23,7 +23,6 @@ services:
     container_name: vector-aggregator 
   
   rustlogger:
-    # image: rustlogger
     build:
       context: ./
       dockerfile: ./dockerfile
@@ -68,27 +67,3 @@ services:
     restart: always
     environment:
       - PROMSCALE_DB_URI=postgres://postgres:postgres@timescaledb:5432/postgres?sslmode=allow
-
-  prometheus:
-    image: prom/prometheus
-    restart: always
-    container_name: prometheus
-    volumes:
-      - ./prometheus:/etc/prometheus
-    ports:
-      - "9090:9090"
-
-  # influxdb: 
-  #   image: influxdb
-  #   restart: always
-  #   ports:
-  #     - "8086:8086"
-  #   container_name: influxdb
-  #   environment:
-  #     - INFLUXDB_DB=vector-database
-  #     - DOCKER_INFLUXDB_INIT_MODE=setup
-  #     - DOCKER_INFLUXDB_INIT_USERNAME=username
-  #     - DOCKER_INFLUXDB_INIT_PASSWORD=password
-  #     - DOCKER_INFLUXDB_INIT_ORG=vector-org
-  #     - DOCKER_INFLUXDB_INIT_BUCKET=vector-bucket
-  #     - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=pOqxyhvAj-0ULQwlmo3VVX9FKTcthQZrMBkhEbn3vteeHPFWA4U9qp8WuAsE6cp7JEVgf6J6YvPVUJqGe0WCMQ==

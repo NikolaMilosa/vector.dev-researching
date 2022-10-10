@@ -3,29 +3,6 @@ type = "host_metrics"
 collectors = [ "cpu" ]
 scrape_interval_secs = 10
 
-# [transforms.metric_to_log]
-# type = "metric_to_log"
-# inputs = ["metrics"]
-# host_tag = "{{ hostname }}"
-
-# [transforms.prep]
-# type = "remap"
-# inputs = ["metric_to_log"]
-# source = """
-# temp = .
-# . = {}
-# .labels = {}
-# .labels.__name__ = temp.name
-# .labels.namespace = temp.tags.host
-# .samples = [[]]
-# if temp.counter != null {
-#     .samples = [[to_unix_timestamp(to_timestamp!(temp.timestamp)), temp.counter.value]]
-# }
-# if temp.gauge != null {
-#     .samples = [[to_unix_timestamp(to_timestamp!(temp.timestamp)), temp.gauge.value]]
-# }
-# """
-
 [sinks.out_metrics]
 inputs = ["metrics"]
 type = "vector"
