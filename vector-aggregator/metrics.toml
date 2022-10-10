@@ -1,0 +1,9 @@
+[sources.in_metrics]
+type = "vector"
+address = "0.0.0.0:6001"
+version = "2"
+
+[sinks.out_metrics]
+type = "prometheus_exporter"
+inputs = ["in_metrics"]
+address = "0.0.0.0:9598"

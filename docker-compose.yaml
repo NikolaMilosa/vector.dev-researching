@@ -5,7 +5,8 @@ services:
     depends_on:
       - vector-aggregator
       - rustlogger
-    image: timberio/vector:0.24.1-debian
+    image: timberio/vector:0.24.0-alpine
+    command: ["--config", "/etc/vector/*.toml"]
     volumes:
       - ./vector-agent/:/etc/vector/
     container_name: vector-agent
@@ -15,7 +16,8 @@ services:
       - loki
       - influxdb
     restart: always
-    image: timberio/vector:0.24.1-debian
+    image: timberio/vector:0.24.0-alpine
+    command: ["--config", "/etc/vector/*.toml"]
     volumes:
       - ./vector-aggregator/:/etc/vector/
     container_name: vector-aggregator 
@@ -48,17 +50,45 @@ services:
     ports:
       - "3100:3100"
 
-  influxdb: 
-    image: influxdb
-    restart: always
+  timescaledb:
+    image: timescale/timescaledb-ha:pg14-latest
+    container_name: timescaledb
     ports:
-      - "8086:8086"
-    container_name: influxdb
+      - "5432:5432"
     environment:
-      - INFLUXDB_DB=vector-database
-      - DOCKER_INFLUXDB_INIT_MODE=setup
-      - DOCKER_INFLUXDB_INIT_USERNAME=username
-      - DOCKER_INFLUXDB_INIT_PASSWORD=password
-      - DOCKER_INFLUXDB_INIT_ORG=vector-org
-      - DOCKER_INFLUXDB_INIT_BUCKET=vector-bucket
-      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=pOqxyhvAj-0ULQwlmo3VVX9FKTcthQZrMBkhEbn3vteeHPFWA4U9qp8WuAsE6cp7JEVgf6J6YvPVUJqGe0WCMQ==
+      - POSTGRES_PASSWORD=postgres
+      - TSTUNE_PROFILE=promscale
+      - POSTGRES_USER=postgres
+
+  promscale:
+    image: timescale/promscale:latest
+    container_name: promscale
+    ports:
+      - "9201:9201"
+    restart: always
+    environment:
+      - PROMSCALE_DB_URI=postgres://postgres:postgres@timescaledb:5432/postgres?sslmode=allow
+
+  prometheus:
+    image: prom/prometheus
+    restart: always
+    container_name: prometheus
+    volumes:
+      - ./prometheus:/etc/prometheus
+    ports:
+      - "9090:9090"
+
+  # influxdb: 
+  #   image: influxdb
+  #   restart: always
+  #   ports:
+  #     - "8086:8086"
+  #   container_name: influxdb
+  #   environment:
+  #     - INFLUXDB_DB=vector-database
+  #     - DOCKER_INFLUXDB_INIT_MODE=setup
+  #     - DOCKER_INFLUXDB_INIT_USERNAME=username
+  #     - DOCKER_INFLUXDB_INIT_PASSWORD=password
+  #     - DOCKER_INFLUXDB_INIT_ORG=vector-org
+  #     - DOCKER_INFLUXDB_INIT_BUCKET=vector-bucket
+  #     - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=pOqxyhvAj-0ULQwlmo3VVX9FKTcthQZrMBkhEbn3vteeHPFWA4U9qp8WuAsE6cp7JEVgf6J6YvPVUJqGe0WCMQ==

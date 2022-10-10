@@ -1,19 +1,39 @@
 apiVersion: 1
 
 datasources:
-  - name: Influx - Vector playing
-    type: influxdb
-    access: proxy
-    url: http://influxdb:8086
-    secureJsonData:
-      token: "pOqxyhvAj-0ULQwlmo3VVX9FKTcthQZrMBkhEbn3vteeHPFWA4U9qp8WuAsE6cp7JEVgf6J6YvPVUJqGe0WCMQ=="
+  # - name: Influx - Vector playing
+  #   type: influxdb
+  #   access: proxy
+  #   url: http://influxdb:8086
+  #   secureJsonData:
+  #     token: "pOqxyhvAj-0ULQwlmo3VVX9FKTcthQZrMBkhEbn3vteeHPFWA4U9qp8WuAsE6cp7JEVgf6J6YvPVUJqGe0WCMQ=="
+  #   jsonData:
+  #     version: Flux
+  #     organization: vector-org
+  #     defaultBucket: vector-bucket
+  #   uid: 0
+
+  - name: Timescaledb - Vector playing
+    uid: 1
+    type: postgres
+    url: timescaledb:5432
+    user: postgres
+    secureJsonData: 
+      password: 'postgres'
     jsonData:
-      version: Flux
-      organization: vector-org
-      defaultBucket: vector-bucket
-    uid: wMZlVr4Vz
+      sslmode: 'disable'
+      timescaledb: true
+
+  - name: Prometheus - Vector playing
+    uid: 2
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    jsonData:
+      httpMethod: POST
 
   - name: Loki - Vector playing
+    uid: 3
     type: loki
     access: proxy
     url: http://loki:3100

@@ -31,7 +31,7 @@
       {
         "datasource": {
           "type": "influxdb",
-          "uid": "wMZlVr4Vz"
+          "uid": "0"
         },
         "description": "",
         "fieldConfig": {
@@ -80,7 +80,7 @@
           {
             "datasource": {
               "type": "influxdb",
-              "uid": "wMZlVr4Vz"
+              "uid": "0"
             },
             "query": "from(bucket: \"vector-bucket\")\r\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\r\n  |> filter(fn: (r) => r[\"_measurement\"] == \"rustlogger.logical_cpus\")\r\n  |> filter(fn: (r) => r[\"_field\"] == \"value\")\r\n  |> filter(fn: (r) => r[\"collector\"] == \"cpu\")\r\n  |> filter(fn: (r) => r[\"metric_type\"] == \"gauge\")\r\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\r\n  |> yield(name: \"mean\")",
             "refId": "A"
