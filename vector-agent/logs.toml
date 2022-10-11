@@ -26,3 +26,7 @@ version = "2"
     [sinks.out_logs.batch]
     max_events = 5
     timeout_secs = 5
+    [sinks.out_logs.buffer]
+    max_events = 25
+    type = "memory"
+    when_full = "block"
