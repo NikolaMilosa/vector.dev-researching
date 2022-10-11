@@ -1,33 +1,59 @@
 version: '3.9'
 
 services:
-  vector-agent:
-    depends_on:
-      - vector-aggregator
-      - rustlogger
+  vector-centralized:
     image: timberio/vector:0.24.0-alpine
     command: ["--config", "/etc/vector/*.toml"]
     volumes:
-      - ./vector-agent/:/etc/vector/
-    container_name: vector-agent
+      - ./vector-centralized/:/etc/vector/
+    container_name: vector-centralized
 
-  vector-aggregator:
-    depends_on:
-      - loki
-      - influxdb
-    restart: always
-    image: timberio/vector:0.24.0-alpine
-    command: ["--config", "/etc/vector/*.toml"]
-    volumes:
-      - ./vector-aggregator/:/etc/vector/
-    container_name: vector-aggregator 
+  # vector-aggregator:
+  #   restart: always
+  #   image: timberio/vector:0.24.0-alpine
+  #   command: ["--config", "/etc/vector/*.toml"]
+  #   volumes:
+  #     - ./vector-aggregator/:/etc/vector/
+  #   container_name: vector-aggregator 
   
-  rustlogger:
+  file_watcher: 
+    restart: always
     build:
-      context: ./
+      context: ./file_watcher
+      dockerfile: ./dockerfile
+    container_name: file_watcher
+    volumes:
+      - ./vector-centralized:/var/config
+    environment:
+      - watch_path=/var/config
+      - docker_host_url=http://host.docker.internal:2375
+      - vector_container=vector-centralized
+      - RUST_LOG=trace
+
+  rustlogger-1:
+    build:
+      context: ./logger
       dockerfile: ./dockerfile
     restart: always
-    container_name: rustlogger
+    container_name: rustlogger-1
+    environment:
+      - RUST_LOG=trace
+
+  rustlogger-2:
+    build:
+      context: ./logger
+      dockerfile: ./dockerfile
+    restart: always
+    container_name: rustlogger-2
+    environment:
+      - RUST_LOG=trace
+
+  rustlogger-3:
+    build:
+      context: ./logger
+      dockerfile: ./dockerfile
+    restart: always
+    container_name: rustlogger-3
     environment:
       - RUST_LOG=trace
 

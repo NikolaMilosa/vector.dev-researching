@@ -1,0 +1,52 @@
+[sources.logs]
+type = "docker_logs"
+include_containers = [ "rustlogger-1", "rustlogger-2" ]
+docker_host = "http://host.docker.internal:2375"
+
+# When everything is running, uncomment this block and add to the transforms.parse > inputs another item "logs3" and save the file, the vector
+# will reload
+
+# [sources.logs3]
+# type = "docker_logs"
+# include_containers = [ "rustlogger-3" ]
+# docker_host = "http://host.docker.internal:2375"
+
+[transforms.parse]
+type = "remap"
+inputs = ["logs", "logs3"]
+source = """
+temp = .
+. = {}
+. |= parse_regex!(temp.message, r'^\\[(?P<timestamp>.*) (?P<severity>\\w+) (?P<app>.*)\\] Logging a random number : (?P<num>-?\\d+)$')
+.app = temp.container_name
+"""
+
+[transforms.filter]
+type = "filter"
+inputs = ["parse"]
+condition = "to_int!(.num) > 0"
+
+# [sinks.out_logs]
+# inputs = ["filter"]
+# type = "vector"
+# address = "vector-aggregator:6000"
+# version = "2"
+#     [sinks.out_logs.batch]
+#     max_events = 5
+#     timeout_secs = 5
+#     [sinks.out_logs.buffer]
+#     max_events = 25
+#     type = "memory"
+#     when_full = "block"
+
+[sinks.out_logs]
+type = "loki"
+inputs = ["filter"]
+endpoint = "http://loki:3100"
+compression = "none"
+    [sinks.out_logs.labels]
+    forwarder = "vector-aggregator"
+    app = "{{ app }}"
+    severity = "{{ severity }}"
+    [sinks.out_logs.encoding]
+    codec = "json"
