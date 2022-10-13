@@ -1,21 +1,30 @@
+mod log_types;
+
 use std::{thread, time::Duration};
 
-use log::{debug, error, info, trace, warn};
+use fake::{Fake, Faker};
+use log::info;
+use log_types::TransportLog;
+use serde_json;
+use std::io::Write;
+
+use crate::log_types::ExtendedTransportLog;
 
 fn main() {
-    env_logger::init();
+    env_logger::builder()
+        .format(|buf, record| writeln!(buf, "{}", record.args()))
+        .init();
+
     loop {
         let num = rand::random::<i16>();
-        if num % 5 == 0 {
-            error!("Logging a random number : {}", num);
-        } else if num % 5 == 1 {
-            warn!("Logging a random number : {}", num);
-        } else if num % 5 == 2 {
-            info!("Logging a random number : {}", num);
-        } else if num % 5 == 3 {
-            debug!("Logging a random number : {}", num);
+        if num % 2 == 0 {
+            let log: TransportLog = Faker.fake();
+            let str = serde_json::to_string(&log).unwrap();
+            info!("{}", str);
         } else {
-            trace!("Logging a random number : {}", num);
+            let log: ExtendedTransportLog = Faker.fake();
+            let str = serde_json::to_string(&log).unwrap();
+            info!("{}", str);
         }
         thread::sleep(Duration::from_secs(1))
     }

@@ -3,7 +3,7 @@ version: '3.9'
 services:
   vector-centralized:
     image: timberio/vector:0.24.0-alpine
-    command: ["--config", "/etc/vector/*.toml"]
+    command: ["--config", "/etc/vector/*.toml", "--watch-config"]
     volumes:
       - ./vector-centralized/:/etc/vector/
     container_name: vector-centralized
@@ -11,24 +11,10 @@ services:
   # vector-aggregator:
   #   restart: always
   #   image: timberio/vector:0.24.0-alpine
-  #   command: ["--config", "/etc/vector/*.toml"]
+  #   command: ["--config", "/etc/vector/*.toml", "--watch-config"]
   #   volumes:
   #     - ./vector-aggregator/:/etc/vector/
   #   container_name: vector-aggregator 
-  
-  file_watcher: 
-    restart: always
-    build:
-      context: ./file_watcher
-      dockerfile: ./dockerfile
-    container_name: file_watcher
-    volumes:
-      - ./vector-centralized:/var/config
-    environment:
-      - watch_path=/var/config
-      - docker_host_url=http://host.docker.internal:2375
-      - vector_container=vector-centralized
-      - RUST_LOG=trace
 
   rustlogger-1:
     build:
