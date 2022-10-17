@@ -1,7 +1,9 @@
 [sources.logs]
-type = "docker_logs"
-include_containers = [ "rustlogger-1" ]
-docker_host = "http://host.docker.internal:2375"
+type = "http"
+address = "0.0.0.0:8000"
+encoding = "text"
+path = "/"
+method = "POST"
 
 # When everything is running, uncomment this block and add to the transforms.parse > inputs another item "logs3" and save the file, the vector
 # will reload
@@ -11,29 +13,37 @@ docker_host = "http://host.docker.internal:2375"
 # include_containers = [ "rustlogger-3" ]
 # docker_host = "http://host.docker.internal:2375"
 
-[transforms.parse]
+[transforms.to_json_array]
 type = "remap"
-inputs = ["logs"]
+inputs = [ "logs" ]
 source = """
-temp = .
-. = {}
-. = parse_json!(temp.message)
-.ic_node = temp.container_name
-.ic_subnet = "172.18.0.0/16"
-.dc = "this should've reloaded"
-.ipv4 = "172.18.0.0"
+. = parse_json!(.message)
 """
+
+[transforms.to_json]
+type = "remap"
+inputs = [ "to_json_array" ]
+source = """
+. = parse_json!(.message)
+"""
+
+# [sinks.out]
+# type = "console"
+# inputs = ["to_json"]
+# target = "stdout"
+#     [sinks.out.encoding]
+#     codec = "text"
 
 [sinks.out_logs]
 type = "loki"
-inputs = ["parse"]
+inputs = ["to_json"]
 endpoint = "http://loki:3100"
 compression = "none"
     [sinks.out_logs.labels]
-    ic_node = "{{ ic_node }}"
-    ic_subnet = "{{ ic_subnet }}"
+    ic_node = "{{ node_ip }}"
+    ic_subnet = "{{ subnet }}"
     dc = "{{ dc }}"
-    ipv4 = "{{ ipv4 }}"
+    ipv4 = "{{ node_ip }}"
     severity = "INFO"
     [sinks.out_logs.encoding]
     codec = "json"

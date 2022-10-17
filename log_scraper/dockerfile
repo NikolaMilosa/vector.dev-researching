@@ -4,4 +4,4 @@ COPY ./ ./
 
 RUN cargo build --release
 
-CMD ["/target/release/logger"]
+CMD ["/target/release/log_scraper"]

@@ -1,31 +1,63 @@
 mod log_types;
 
-use std::{thread, time::Duration};
+use std::env;
 
+use actix_web::{get, middleware::Logger, web, App, HttpResponse, HttpServer, Responder};
 use fake::{Fake, Faker};
-use log::info;
 use log_types::TransportLog;
 use serde_json;
-use std::io::Write;
 
-use crate::log_types::ExtendedTransportLog;
+#[get("/logs/{cursor}")]
+async fn nonempty(cursor: web::Path<String>) -> impl Responder {
+    let logs = create_logs(Some(cursor.into_inner()));
 
-fn main() {
-    env_logger::builder()
-        .format(|buf, record| writeln!(buf, "{}", record.args()))
-        .init();
+    let response = serde_json::to_string(&logs).unwrap();
 
-    loop {
-        let num = rand::random::<i16>();
-        if num % 2 == 0 {
-            let log: TransportLog = Faker.fake();
-            let str = serde_json::to_string(&log).unwrap();
-            info!("{}", str);
+    HttpResponse::Ok().body(response)
+}
+
+#[get("/logs")]
+async fn empty() -> impl Responder {
+    let logs = create_logs(None);
+
+    let response = serde_json::to_string(&logs).unwrap();
+
+    HttpResponse::Ok().body(response)
+}
+
+fn create_logs(cursor: Option<String>) -> Vec<TransportLog> {
+    let num_logs = rand::random::<u8>() % 10 + 1;
+    let mut logs = Vec::new();
+
+    for _ in 0..num_logs {
+        let log: TransportLog = Faker.fake();
+
+        if let Some(ref cursor) = cursor {
+            let log = TransportLog {
+                __cursor: cursor.clone(),
+                ..log
+            };
+            logs.push(log);
         } else {
-            let log: ExtendedTransportLog = Faker.fake();
-            let str = serde_json::to_string(&log).unwrap();
-            info!("{}", str);
+            logs.push(log)
         }
-        thread::sleep(Duration::from_secs(1))
     }
+
+    logs
+}
+
+#[actix_rt::main]
+async fn main() -> std::io::Result<()> {
+    let port = env::var("PORT").unwrap_or_else(|_| "5000".to_string());
+    let host = env::var("HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
+
+    HttpServer::new(|| App::new().wrap(Logger::default()).configure(init_routes))
+        .bind(format!("{}:{}", host, port))?
+        .run()
+        .await
+}
+
+fn init_routes(cfg: &mut web::ServiceConfig) {
+    cfg.service(nonempty);
+    cfg.service(empty);
 }

@@ -7,41 +7,79 @@ services:
     volumes:
       - ./vector-centralized/:/etc/vector/
     container_name: vector-centralized
+    restart: always
 
-  # vector-aggregator:
+  log-generator-1:
+    build:
+      context: ./logger
+      dockerfile: ./dockerfile
+    restart: always
+    container_name: log-generator-1
+    environment:
+      - RUST_LOG=trace
+      - PORT=5000
+      - HOST=0.0.0.0
+    ports:
+      - "5000:5000"
+  
+  log-generator-2:
+    build:
+      context: ./logger
+      dockerfile: ./dockerfile
+    restart: always
+    container_name: log-generator-2
+    environment:
+      - RUST_LOG=trace
+      - PORT=5000
+      - HOST=0.0.0.0
+    ports:
+      - "5001:5000"
+
+  log-generator-3:
+    build:
+      context: ./logger
+      dockerfile: ./dockerfile
+    restart: always
+    container_name: log-generator-3
+    environment:
+      - RUST_LOG=trace
+      - PORT=5000
+      - HOST=0.0.0.0
+    ports:
+      - "5002:5000"
+
+  log-scraper-1:
+    build: 
+      context: ./log_scraper
+      dockerfile: ./dockerfile
+    container_name: log-scrapper
+    restart: always
+    environment:
+      - RUST_LOG=trace
+      - API_PORT=5000
+      - SCRAPE_INTERVAL=10
+      - VECTOR_INSTANCE_IP=http://vector-centralized:8000
+      - CONFIG_PATH=/etc/scraper/config.json
+    volumes:
+      - ./log_scraper/config.json:/etc/scraper/config.json
+
+  # rustlogger-2:
+  #   build:
+  #     context: ./logger
+  #     dockerfile: ./dockerfile
   #   restart: always
-  #   image: timberio/vector:0.24.0-alpine
-  #   command: ["--config", "/etc/vector/*.toml", "--watch-config"]
-  #   volumes:
-  #     - ./vector-aggregator/:/etc/vector/
-  #   container_name: vector-aggregator 
+  #   container_name: rustlogger-2
+  #   environment:
+  #     - RUST_LOG=trace
 
-  rustlogger-1:
-    build:
-      context: ./logger
-      dockerfile: ./dockerfile
-    restart: always
-    container_name: rustlogger-1
-    environment:
-      - RUST_LOG=trace
-
-  rustlogger-2:
-    build:
-      context: ./logger
-      dockerfile: ./dockerfile
-    restart: always
-    container_name: rustlogger-2
-    environment:
-      - RUST_LOG=trace
-
-  rustlogger-3:
-    build:
-      context: ./logger
-      dockerfile: ./dockerfile
-    restart: always
-    container_name: rustlogger-3
-    environment:
-      - RUST_LOG=trace
+  # rustlogger-3:
+  #   build:
+  #     context: ./logger
+  #     dockerfile: ./dockerfile
+  #   restart: always
+  #   container_name: rustlogger-3
+  #   environment:
+  #     - RUST_LOG=trace
 
   grafana:
     image: grafana/grafana-oss
